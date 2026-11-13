@@ -32,6 +32,10 @@ var ErrOperation = errors.New("libscrapli: operation")
 // arguments.
 var ErrInvalidArgument = errors.New("libscrapli: invalid argument")
 
+// ErrAuthentication is an error corresponding to the libscrapli result return code for
+// authentication failures.
+var ErrAuthentication = errors.New("libscrapli: authentication")
+
 // ErrUnknown is an error corresponding to the libscrapli result return code for other errors
 // that are not explicitly caught in libscrapli.
 var ErrUnknown = errors.New("libscrapli: unknown/unhandled error")

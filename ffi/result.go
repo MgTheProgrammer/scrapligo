@@ -19,6 +19,7 @@ const (
 	libscrapliReturnCodeTransport
 	libscrapliReturnCodeOperation
 	libscrapliReturnCodeInvalidArgument
+	libscrapliReturnCodeAuthentication
 )
 
 // libscrapliResult holds a libscrapli return code and the caller of that functions provided
@@ -72,6 +73,8 @@ func resultCodeError(rc uint8) error {
 		return scrapligoerrors.ErrOperation
 	case libscrapliReturnCodeInvalidArgument:
 		return scrapligoerrors.ErrInvalidArgument
+	case libscrapliReturnCodeAuthentication:
+		return scrapligoerrors.ErrAuthentication
 	case libscrapliReturnCodeUnknown:
 		return scrapligoerrors.ErrUnknown
 	default:

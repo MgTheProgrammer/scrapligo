@@ -3,6 +3,7 @@ package cli_test
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -75,6 +76,55 @@ func TestOpenErrors(t *testing.T) {
 			_, err = d.Open(ctx)
 			if !errors.Is(err, c.expected) {
 				t.Fatalf("expected errors.Is(err, %v), got %v", c.expected, err)
+			}
+		})
+	}
+}
+
+// TestOpenAuthenticationFailure replays recorded (srl, bin transport) sessions in which the device
+// rejects our credentials.
+func TestOpenAuthenticationFailure(t *testing.T) {
+	cases := map[string][]scrapligooptions.Option{
+		// wrong password -- the device keeps prompting for the password
+		"password-reprompted": {
+			scrapligooptions.WithPassword("not-the-password"),
+		},
+		// key rejected, ssh falls back to a password prompt but there is no password to send
+		"key-rejected-password-prompted": nil,
+		// key rejected, no other auth methods to fall back to
+		"key-rejected-permission-denied": nil,
+	}
+
+	for name, options := range cases {
+		t.Run(name, func(t *testing.T) {
+			f, err := filepath.Abs("./fixtures/open-authentication-failure-" + name)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			d, err := scrapligocli.NewCli(
+				testHost,
+				append(
+					[]scrapligooptions.Option{
+						scrapligooptions.WithUsername("admin"),
+						scrapligooptions.WithDefinitionFileOrName(scrapligocli.NokiaSrlinux),
+						scrapligooptions.WithTransportTest(),
+						scrapligooptions.WithTestTransportF(f),
+						scrapligooptions.WithReadSize(1),
+					},
+					options...,
+				)...,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+			defer cancel()
+
+			_, err = d.Open(ctx)
+			if !errors.Is(err, scrapligoerrors.ErrAuthentication) {
+				t.Fatalf("expected errors.Is(err, ErrAuthentication), got %v", err)
 			}
 		})
 	}
