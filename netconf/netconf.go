@@ -253,8 +253,9 @@ func (n *Netconf) GetCapabilities() ([]string, error) {
 
 // GetHostKeyFingerprint returns the raw ssh host key digest (fingerprint) of the connected device
 // for the given hash -- 16 bytes for md5, 20 for sha1, 32 for sha256. Fetched from the session on
-// demand, so only available for the ssh2 transport while open, otherwise returns an error wrapping
-// ErrOperation.
+// demand, so only available for the ssh2 transport while open. Returns an ffi error if the driver
+// was never opened (or was closed), or an error wrapping ErrOperation if the fingerprint is
+// unavailable (i.e. the transport is not ssh2).
 func (n *Netconf) GetHostKeyFingerprint(hash scrapligoconstants.HostKeyHash) ([]byte, error) {
 	if n.ptr == 0 {
 		return nil, scrapligoerrors.NewFfiError("driver pointer nil", nil)
