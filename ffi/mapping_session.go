@@ -7,6 +7,11 @@ func registerSession(m *Mapping, libScrapliFfi uintptr) {
 	purego.RegisterLibFunc(&m.Session.write, libScrapliFfi, "ls_session_write")
 	purego.RegisterLibFunc(&m.Session.writeAndReturn, libScrapliFfi, "ls_session_write_and_return")
 	purego.RegisterLibFunc(&m.Session.writeReturn, libScrapliFfi, "ls_session_write_return")
+	purego.RegisterLibFunc(
+		&m.Session.getHostKeyFingerprint,
+		libScrapliFfi,
+		"ls_session_get_host_key_fingerprint",
+	)
 }
 
 // SessionMapping holds session specific mappings.
@@ -28,6 +33,12 @@ type SessionMapping struct {
 	) uint8
 	writeReturn func(
 		driverPtr uintptr,
+	) uint8
+	getHostKeyFingerprint func(
+		driverPtr uintptr,
+		hash uint8,
+		buf *[]byte,
+		digestSize *uintptr,
 	) uint8
 }
 
@@ -74,5 +85,19 @@ func (m *SessionMapping) WriteReturn(
 	return newLibScrapliResult(
 		m.writeReturn(driverPtr),
 		"failed executing writeReturn",
+	).check()
+}
+
+// GetHostKeyFingerprint fills the raw host key digest of the connected device for the given hash
+// into the buf (which must be at least the digest size), and the digest size into digestSize.
+func (m *SessionMapping) GetHostKeyFingerprint(
+	driverPtr uintptr,
+	hash uint8,
+	buf *[]byte,
+	digestSize *uintptr,
+) error {
+	return newLibScrapliResult(
+		m.getHostKeyFingerprint(driverPtr, hash, buf, digestSize),
+		"fetch host key fingerprint failed, connection not opened or transport not ssh2",
 	).check()
 }
